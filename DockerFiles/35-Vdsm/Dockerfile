@@ -1,4 +1,4 @@
-FROM rhel6:latest
+FROM fedora:20
 MAINTAINER "Moran Goldboim" <mgoldboi@redhat.com>
 ENV container docker
 
@@ -23,5 +23,5 @@ EXPOSE 22 54321
 
 VOLUME [ "/var/log/vdsm/", "/sys/fs/cgroup" ]
 
-CMD ["/usr/sbin/init"]
-#ENTRYPOINT ["/usr/sbin/init"]
+#CMD ["/usr/sbin/init"]
+ENTRYPOINT ["/usr/sbin/init"]
