@@ -1,0 +1,75 @@
+Sending build context to Docker daemon 4.608 kB
+Sending build context to Docker daemon 
+Step 0 : FROM mgoldboi/ovirt-rpm:latest
+ ---> a884ad994825
+Step 1 : MAINTAINER "Moran Goldboim" <mgoldboi@redhat.com>
+ ---> Running in bb7c07dde1e9
+ ---> a2e4ea025a16
+Removing intermediate container bb7c07dde1e9
+Step 2 : ENV container docker
+ ---> Running in de290b39848e
+ ---> fa2fd0591d8d
+Removing intermediate container de290b39848e
+Step 3 : RUN yum -y update; yum clean all
+ ---> Running in 8ee84b53ffbc
+Loaded plugins: versionlock
+Resolving Dependencies
+--> Running transaction check
+---> Package glibc.x86_64 0:2.18-14.fc20 will be updated
+---> Package glibc.x86_64 0:2.18-16.fc20 will be an update
+---> Package glibc-common.x86_64 0:2.18-14.fc20 will be updated
+---> Package glibc-common.x86_64 0:2.18-16.fc20 will be an update
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+================================================================================
+ Package              Arch           Version              Repository       Size
+================================================================================
+Updating:
+ glibc                x86_64         2.18-16.fc20         updates         3.6 M
+ glibc-common         x86_64         2.18-16.fc20         updates          11 M
+
+Transaction Summary
+================================================================================
+Upgrade  2 Packages
+
+Total download size: 15 M
+Downloading packages:
+Delta RPMs disabled because /usr/bin/applydeltarpm not installed.
+--------------------------------------------------------------------------------
+Total                                              755 kB/s |  15 MB  00:20     
+Running transaction check
+Running transaction test
+Transaction test succeeded
+Running transaction
+  Updating   : glibc-common-2.18-16.fc20.x86_64                             1/4 
+  Updating   : glibc-2.18-16.fc20.x86_64                                    2/4 
+  Cleanup    : glibc-common-2.18-14.fc20.x86_64                             3/4 
+  Cleanup    : glibc-2.18-14.fc20.x86_64                                    4/4 
+  Verifying  : glibc-2.18-16.fc20.x86_64                                    1/4 
+  Verifying  : glibc-common-2.18-16.fc20.x86_64                             2/4 
+  Verifying  : glibc-2.18-14.fc20.x86_64                                    3/4 
+  Verifying  : glibc-common-2.18-14.fc20.x86_64                             4/4 
+
+Updated:
+  glibc.x86_64 0:2.18-16.fc20         glibc-common.x86_64 0:2.18-16.fc20        
+
+Complete!
+Loaded plugins: versionlock
+Cleaning repos: fedora ovirt-3.5-patternfly1 ovirt-3.5-pre updates
+Cleaning up everything
+ ---> 08e940dca546
+Removing intermediate container 8ee84b53ffbc
+Step 4 : ADD ovirt-engine-35-localdb.conf /tmp/ovirt-engine-35.conf
+ ---> 87f06c93c193
+Removing intermediate container de1035db9f62
+Step 5 : EXPOSE 5432
+ ---> Running in b73ed91c402f
+ ---> 9f5de1b1689a
+Removing intermediate container b73ed91c402f
+Step 6 : VOLUME [ "/var/lib/pgsql/data" ]
+ ---> Running in bdf60d0b3c49
+ ---> e44aa36bf985
+Removing intermediate container bdf60d0b3c49
+Successfully built e44aa36bf985
