@@ -77,10 +77,10 @@ ovirt:ovirt-build
 	@echo -e $(data-container-cmessage)
 	sudo docker run -d -v /etc/ovirt-engine -v /etc/sysconfig/ovirt-engine \
 	-v /etc/exports.d -v /etc/pki/ovirt-engine/ -v /var/log/ovirt-engine \
-	--name ovirt-data $(maintainer)/ovirt-configured-$(ver)
+	--name ovirt-data $(maintainer)/ovirt-sa-configured-$(ver)
 	@echo -e "$(OK_COLOR)\tRunning oVirt container connected to ovirt-data container$(NO_COLOR)"
 	sudo docker run --privileged -dt -p 80:80 -p 443:443 \
-	--name ovirt --volumes-from ovirt-data $(maintainer)/ovirt-configured-$(ver) #CHECKME ovirt-configured
+	--name ovirt --volumes-from ovirt-data $(maintainer)/ovirt-sa-configured-$(ver) #CHECKME ovirt-configured
 	@echo -e "$(OK_COLOR)\toVirt is starting...$(NO_COLOR)"
 	sleep 10
 	@echo -e "$(OK_COLOR)\tYour oVirt-container is ready for use (running now)"
