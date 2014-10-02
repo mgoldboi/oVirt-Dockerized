@@ -32,8 +32,8 @@ RUN systemctl enable sshd.service
 #RUN /usr/sbin/chkconfig sshd on
 
 #docker env config
-EXPOSE 22 80 443 2049 32803 443 6100 662 80 875 892 111 32769 662 875 892 54321
-VOLUME [ "/etc/ovirt-engine/", "/etc/sysconfig/ovirt-engine/", "/etc/exports.d/", "/etc/pki/ovirt-engine/", "/var/log/ovirt-engine/" ]
+EXPOSE 22 80 443 2049 32803 443 6100 662 80 875 892 111 32769 662 875 892
+#VOLUME [ "/etc/ovirt-engine/", "/etc/sysconfig/ovirt-engine/", "/etc/exports.d/", "/etc/pki/ovirt-engine/", "/var/log/ovirt-engine/" ]
 ENTRYPOINT ["/sbin/init"]
 
 #RUN service sshd start

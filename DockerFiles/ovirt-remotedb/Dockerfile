@@ -1,4 +1,4 @@
-FROM mgoldboi/ovirt-rpm:latest
+FROM mgoldboi/ovirt-3.5.0-rpm
 MAINTAINER "Moran Goldboim" <mgoldboi@redhat.com>
 ENV container docker
 
