@@ -28,9 +28,6 @@ help:
 	@echo -e "End help"
 
 #################################################################
-er run -d -v /etc/ovirt-engine -v /etc/sysconfig/ovirt-engine \
-        -v /etc/exports.d -v /etc/pki/ovirt-engine/ -v /var/log/ovirt-engine \
-        -v /var/lib/pgsql/data --name ovirt-data mgoldboi/ovirt-sa-configured-3.5.0
 ovirt-db-pid = $(shell docker inspect --format {{.State.Pid}} ovirt-db)
 ovirt-pid = $(shell docker inspect --format {{.State.Pid}} ovirt)
 
@@ -195,7 +192,7 @@ ovirt-reports-container:
 	@echo -e "$(OK_COLOR) Building a RHEV-reports container:$(NO_COLOR)"
 	docker build --rm --tag $(maintainer)/ovirt-reports35 DockerFiles/35-reports/ |& tee dockerbuild.log
 
-ovirt-vdsm:
+ovirt-vdsm-rpm:
 	@echo -e "$(OK_COLOR) Building a vdsm container:$(NO_COLOR)"
 	docker build --rm --tag $(maintainer)/ovirt-vdsm35 DockerFiles/35-Vdsm/ |& tee dockerbuild.log
 
