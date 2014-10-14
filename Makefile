@@ -21,10 +21,12 @@ help:
 	@echo -e "oVirt dockorized Makefile defenitions" 
 	@echo -e "*************************************"
 	@echo -e "\n\tINFO:docker/-io and nsenter are required for this makefile to run\n"
-	@echo -e "make ovirt \t\tbuilds a configured oVirt Docker image on a single container "
+	@echo -e "make ovirt \t\tBuilds a configured oVirt Docker image and a Database image"
+	@echo -e "make ovirt-run \t\tRuns a configured oVirt Docker container connected to Database container"
 	@echo -e "make ovirt-manual \tbuilds a oVirt Docker container and running interactive engine-setup (oVirt configuration)"
+	@echo -e "make ovirt-SA \t\tBuilds a configured stand alone oVirt Docker image"
+	@echo -e "make ovirt-SA-run \tRuns a oVirt stand alone container"
 	@echo -e "make ovirt-rpm \t\tbuilds a clean oVirt Docker container with only RPM installation on it "
-	@echo -e "make ovirt-remotedb \tbuilds a oVirt Docker linked to an external Postgres DB container "
 	@echo -e "End help"
 
 #################################################################
@@ -52,10 +54,61 @@ ovirt-rpm:
 	@echo -e "$(OK_COLOR)\tBuilding a oVirt Docker container...$(NO_COLOR)"
 	docker build --rm --tag $(maintainer)/ovirt-$(ver)-rpm DockerFiles/ovirt-rpm/ |& tee ovirt-rpm-build.log
 
+
+#################################################################
+##oVirt configured - testing
+#################################################################
+ovirt-init:
+#log
+	@echo -e $(call build-message,"oVirt remote postgres")
+	docker build --rm --tag $(maintainer)/ovirt-db-$(ver) \
+	DockerFiles/ovirt-db/ |& tee ovirt-remotedb-build.log
+	@echo -e $(call build-message,"oVirt")
+	docker build --rm --tag $(maintainer)/ovirt-remotedb-$(ver) \
+	DockerFiles/ovirt-remotedb/ |& tee ovirt-remotedb-build.log
+	docker run --name ovirt-db -d $(maintainer)/ovirt-db-$(ver)
+	@echo -e $(call run-message,"oVirt container connected to DB")
+	docker run -dt --privileged --link ovirt-db:ovirt-db \
+	-p 80:80 -p 443:443  --name ovirt $(maintainer)/ovirt-remotedb-$(ver)
+
+ovirt:ovirt-init
+	@echo -e $(call conf-message,"oVirt container with remote DB")
+	/usr/bin/nsenter -m -u -n -i -p -t $(ovirt-pid) -- engine-setup  --config-append=/tmp/ovirt-engine-35.conf
+	@echo -e $(call commit-message,"oVirt container and DB")
+	@echo -e "$(OK_COLOR)\tCommiting oVirt...$(NO_COLOR)"
+	docker commit ovirt $(maintainer)/ovirt-engine-$(ver)
+	@echo -e "$(OK_COLOR)\tCommiting DB...$(NO_COLOR)"
+	docker commit ovirt-db $(maintainer)/ovirt-db-$(ver)
+	@echo -e "$(OK_COLOR)\tRemoving temp containers..$(NO_COLOR)"
+	docker rm -f ovirt
+	docker rm -f ovirt-db
+	@echo -e $(remove-message)
+	docker rmi $(maintainer)/ovirt-remotedb-$(ver)
+
+ovirt-run:
+	@echo -e $(data-container-cmessage)
+	#ovirt data container
+	docker run -d -v /etc/ovirt-engine -v /etc/sysconfig/ovirt-engine \
+	-v /etc/exports.d -v /etc/pki/ovirt-engine/ -v /var/log/ovirt-engine \
+	--name ovirt-data $(maintainer)/ovirt-engine-$(ver)
+	#DB data container
+	docker run -d -v /var/lib/pgsql/data --name ovirt-db-data $(maintainer)/ovirt-db-$(ver)
+	@echo -e "$(OK_COLOR)\tRunning oVirt container and DB container connected to data$(NO_COLOR)"
+	#run ovirt-db
+	docker run --name ovirt-db -d --volumes-from ovirt-db-data $(maintainer)/ovirt-db-$(ver)
+	#Run ovirt
+	docker run --privileged -dt -p 80:80 -p 443:443 --link ovirt-db:ovirt-db \
+	--name ovirt --volumes-from ovirt-data $(maintainer)/ovirt-engine-$(ver)
+	@echo -e "$(OK_COLOR)\toVirt is starting...$(NO_COLOR)"
+	sleep 10
+	@echo -e "$(OK_COLOR)\tYour oVirt-container is ready for use (running now)"
+	@echo -e "$(OK_COLOR)\tyou can login https://localhost/ovirt-engine (admin/ovirt)$(NO_COLOR)"
+
+
 #################################################################
 ##Configured oVirt build process
 #################################################################
-ovirt-build:
+ovirt-SA-build:
 	@echo -e $(call build-message,"oVirt-SA")
 	docker build --rm --tag $(maintainer)/ovirt-$(ver) DockerFiles/ovirt/ |& tee ovirt-build.log
 	#run container in privileged mode with systemd working
@@ -63,7 +116,7 @@ ovirt-build:
 	docker run --privileged -dt -p 80:80 -p 443:443 \
 	--name ovirt $(maintainer)/ovirt-$(ver)
 
-ovirt:ovirt-build
+ovirt-SA:ovirt-build
 	@echo -e $(call conf-message,"oVirt-SA")
 	/usr/bin/nsenter -m -u -n -i -p -t $(ovirt-pid) -- engine-setup --config-append=/tmp/ovirt-engine-35.conf
 	@echo -e $(call commit-message,"oVirt-SA")
@@ -72,6 +125,8 @@ ovirt:ovirt-build
 	sudo docker rm ovirt
 	@echo -e $(remove-message)
 	sudo docker rmi $(maintainer)/ovirt-$(ver)
+
+ovirt-SA-run:
 	@echo -e $(data-container-cmessage)
 	sudo docker run -d -v /etc/ovirt-engine -v /etc/sysconfig/ovirt-engine \
 	-v /etc/exports.d -v /etc/pki/ovirt-engine/ -v /var/log/ovirt-engine \
@@ -84,62 +139,6 @@ ovirt:ovirt-build
 	@echo -e "$(OK_COLOR)\tYour oVirt-container is ready for use (running now)"
 	@echo -e "$(OK_COLOR)\tyou can login https://localhost/ovirt-engine (admin/ovirt)$(NO_COLOR)"
 
-#################################################################
-##Configured oVirt connected to remote database container
-#################################################################
-ovirt-remotedb-init:
-	@echo -e $(call run-message,"postgres")
-	sudo docker run --name ovirt-db -d postgres
-#	@echo -e "$(OK_COLOR)\tbuilding ovirt container$(NO_COLOR)"
-	@echo -e $(call build-message,"oVirt-remoteDB")
-	docker build --rm --tag $(maintainer)/ovirt-remotedb-$(ver) \
-	DockerFiles/ovirt-remotedb/ |& tee ovirt-remotedb-build.log 
-
-ovirt-remotedb-conf:ovirt-remotedb-init
-	sleep 10
-	@echo -e "pid is $(ovirt-db-pid)"
-	@echo -e "$(OK_COLOR)\tCreating engine DB user:engine password:ovirt$(NO_COLOR)"
-	nsenter -m -u -n -i -p -t $(ovirt-db-pid) -- su - postgres -c "psql -d template1 -c \"create user engine password 'ovirt';\""
-	@echo -e "$(OK_COLOR)\tcreating engine database$(NO_COLOR)"
-	nsenter -m -u -n -i -p -t $(ovirt-db-pid) -- su - postgres -c "psql -d template1 -c \"create database engine owner engine template template0 encoding 'UTF8' lc_collate 'en_US.UTF-8' lc_ctype 'en_US.UTF-8';\""
-	#commit a clean engine DB to image repo
-	docker commit ovirt-db $(maintainer)/ovirt-db-$(ver)
-	@echo -e $(call run-message,"oVirt container connected to DB")
-	docker run -dt --privileged --link ovirt-db:ovirt-db \
-	-p 80:80 -p 443:443  --name ovirt $(maintainer)/ovirt-remotedb-$(ver)
-
-ovirt-remotedb:ovirt-remotedb-conf
-	@echo -e $(call conf-message,"oVirt container with remote DB")
-	/usr/bin/nsenter -m -u -n -i -p -t $(ovirt-pid) -- engine-setup  --config-append=/tmp/ovirt-engine-35.conf
-	@echo -e $(call commit-message,"oVirt container and DB")
-	@echo -e "$(OK_COLOR)\tStopping...$(NO_COLOR)"
-	docker stop ovirt
-#	docker stop ovirt-db
-	@echo -e "$(OK_COLOR)\tCommiting...$(NO_COLOR)"
-	docker commit ovirt $(maintainer)/ovirt-remotedb-configured-$(ver)
-#	docker commit ovirt-db $(maintainer)/ovirt-db-configured-$(ver)
-	@echo -e "$(OK_COLOR)\tRemoving..$(NO_COLOR)"
-	docker rm ovirt
-#	docker rm ovirt-db
-	@echo -e $(remove-message)
-	docker rmi $(maintainer)/ovirt-remotedb-$(ver)
-	@echo -e $(data-container-cmessage)
-	#ovirt data container
-	docker run -d -v /etc/ovirt-engine -v /etc/sysconfig/ovirt-engine \
-	-v /etc/exports.d -v /etc/pki/ovirt-engine/ -v /var/log/ovirt-engine \
-	--name ovirt-data $(maintainer)/ovirt-remotedb-configured-$(ver)
-	#DB data container
-#	docker run -d -v /var/lib/pgsql/data --name ovirt-db-data $(maintainer)/ovirt-db-configured-$(ver)
-	@echo -e "$(OK_COLOR)\tRunning oVirt container and DB container connected to data$(NO_COLOR)"
-	#run ovirt-db
-#	docker run --name ovirt-db -d --volumes-from ovirt-db-data $(maintainer)/ovirt-db-configured-$(ver)
-	#Run ovirt
-	docker run --privileged -dt -p 80:80 -p 443:443 --link ovirt-db:ovirt-db \
-	--name ovirt --volumes-from ovirt-data $(maintainer)/ovirt-remotedb-configured-$(ver)
-	@echo -e "$(OK_COLOR)\toVirt is starting...$(NO_COLOR)"
-	sleep 10
-	@echo -e "$(OK_COLOR)\tYour oVirt-container is ready for use (running now)"
-	@echo -e "$(OK_COLOR)\tyou can login https://localhost/ovirt-engine (admin/ovirt)$(NO_COLOR)"
 
 #################################################################
 ##Manual configuration of oVirt
@@ -209,21 +208,14 @@ ovirt-data-container:
 dir-volume-map: data-container
 	docker inspect --format='{{.Volumes}}' $(shell cat .ovirt.cid) | tr '[' ' ' | tr ' '  '\n' | tr -d ']' | grep -v map >dir-volume-map.txt
 
-test:
-	
-	docker run --name ovirt-db -d --volumes-from ovirt-db-data $(maintainer)/ovirt-db-configured-$(ver)
-	@echo -e "$(OK_COLOR)\toVirt is starting...$(NO_COLOR)"
-	sleep 10
-	@echo -e "$(OK_COLOR)\tYour oVirt-container is ready for use (running now)"
-	@echo -e "$(OK_COLOR)\tyou can login https://localhost/ovirt-engine (admin/ovirt)$(NO_COLOR)"
 #################################################################
 ##Clean build containers
 #################################################################
 clean:
-	@echo -e "$(OK_COLOR)\tStoping running containers $(NO_COLOR)"
-	@docker stop $(shell sudo docker ps -a -q --filter 'name=ovi*') ||:
+	#@echo -e "$(OK_COLOR)\tStoping running containers $(NO_COLOR)"
+	#@docker stop $(shell sudo docker ps -a -q --filter 'name=ovi*') ||:
 	@echo -e "$(OK_COLOR)\tRemoving ovirt containers$(NO_COLOR)"
-	docker rm $(shell docker ps -a -q --filter 'name=ovi*') ||:
+	docker rm -f $(shell docker ps -a -q --filter 'name=ovi*') ||:
 	@echo -e "$(OK_COLOR)\tRemoving log files$(NO_COLOR)"
 	rm -f ovirt*.log
 	
