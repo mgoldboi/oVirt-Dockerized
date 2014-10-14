@@ -1,4 +1,4 @@
 # Logs and databases #
 ######################
 *.log
-Kubernetes/*
+Run/Kubernetes/*
