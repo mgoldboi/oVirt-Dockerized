@@ -80,10 +80,10 @@ ovirt-SA-run:
 #################################################################
 ##Manual configuration of oVirt
 #################################################################
-ovirt-manual-run:ovirt-rpm
+ovirt-manual-run:
 	@echo -e "$(OK_COLOR)running ovirt-rpm\(clean install image\)$(NO_COLOR)"
 	docker run --privileged -dt -p 80:80 -p 443:443 \
-        --name ovirt $(maintainer)/ovirt-rpm-$(ver)
+        --name ovirt $(maintainer)/ovirt-$(ver)-rpm
 
 ovirt-manual:ovirt-manual-run		
 	@echo -e "$(OK_COLOR) /tRuning engine-setup  - please setup oVirt manually.$(NO_COLOR)"

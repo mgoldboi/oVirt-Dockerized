@@ -22,10 +22,8 @@ help:
 	@echo -e "*************************************"
 	@echo -e "\n\tINFO:docker/-io and nsenter are required for this makefile to run\n"
 	@echo -e "make ovirt \t\tBuilds a configured oVirt Docker image and a Database image"
-	@echo -e "make ovirt-run \t\tRuns a configured oVirt Docker container connected to Database container"
-	@echo -e "make ovirt-manual \tbuilds a oVirt Docker container and running interactive engine-setup (oVirt configuration)"
 	@echo -e "make ovirt-SA \t\tBuilds a configured stand alone oVirt Docker image"
-	@echo -e "make ovirt-SA-run \tRuns a oVirt stand alone container"
+	@echo -e "make ovirt-manual \tbuilds a oVirt Docker container and running interactive engine-setup (oVirt configuration)"
 	@echo -e "make ovirt-rpm \t\tbuilds a clean oVirt Docker container with only RPM installation on it "
 	@echo -e "make clean- \t\tDestroy and deletes oVirt containers"
 	@echo -e "End help"
@@ -91,7 +89,7 @@ ovirt:ovirt-init
 #################################################################
 ovirt-SA-build:
 	@echo -e $(call build-message,"oVirt-SA")
-	docker build --rm --tag $(maintainer)/ovirt-$(ver) DockerFiles/ovirt/ |& tee ovirt-build.log
+	docker build --rm --tag $(maintainer)/ovirt-$(ver) DockerFiles/ovirt-SA/ |& tee ovirt-build.log
 	#run container in privileged mode with systemd working
 	@echo -e $(call run-message,"oVirt-SA")
 	docker run --privileged -dt -p 80:80 -p 443:443 \
