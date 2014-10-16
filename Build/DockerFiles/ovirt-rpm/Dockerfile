@@ -27,17 +27,13 @@ RUN echo 'root:ovirt' | chpasswd;
 #sshd enable
 RUN /sbin/sshd-keygen
 RUN systemctl enable sshd.service
-#RUN /bin/systemctl start sshd.service; /bin/systemctl enable sshd.service
-#RUN /usr/sbin/service sshd start
-#RUN /usr/sbin/chkconfig sshd on
 
 #docker env config
 EXPOSE 22 80 443 2049 32803 443 6100 662 80 875 892 111 32769 662 875 892
-#VOLUME [ "/etc/ovirt-engine/", "/etc/sysconfig/ovirt-engine/", "/etc/exports.d/", "/etc/pki/ovirt-engine/", "/var/log/ovirt-engine/" ]
-ENTRYPOINT ["/sbin/init"]
 
-#RUN service sshd start
-#RUN chkconfig sshd on
+#VOLUME [ "/etc/ovirt-engine/", "/etc/sysconfig/ovirt-engine/", "/etc/exports.d/", "/etc/pki/ovirt-engine/", "/var/log/ovirt-engine/" ]
+
+ENTRYPOINT ["/sbin/init"]
 
 RUN echo 'root:ovirt' | chpasswd
 
