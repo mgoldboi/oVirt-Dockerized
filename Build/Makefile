@@ -51,7 +51,7 @@ data-container-cmessage = "$(OK_COLOR)\tCreating data only container$(NO_COLOR)"
 #################################################################
 ovirt-rpm:
 	@echo -e "$(OK_COLOR)\tBuilding a oVirt Docker container...$(NO_COLOR)"
-	docker build --rm --tag $(maintainer)/ovirt-$(ver)-rpm DockerFiles/ovirt-rpm/ |& tee ovirt-rpm-build.log
+	docker build --rm --no-cache --tag $(maintainer)/ovirt-$(ver)-rpm DockerFiles/ovirt-rpm/ |& tee ovirt-rpm-build.log
 
 
 #################################################################
@@ -95,7 +95,7 @@ ovirt-SA-build:
 	docker run --privileged -dt -p 80:80 -p 443:443 \
 	--name ovirt $(maintainer)/ovirt-$(ver)
 
-ovirt-SA:ovirt-build
+ovirt-SA:ovirt-SA-build
 	@echo -e $(call conf-message,"oVirt-SA")
 	/usr/bin/nsenter -m -u -n -i -p -t $(ovirt-pid) -- engine-setup --config-append=/tmp/ovirt-engine-35.conf
 	@echo -e $(call commit-message,"oVirt-SA")
